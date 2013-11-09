@@ -65,7 +65,7 @@
       });
     });
     // send json (now with lat and lng as keys) off to be mapped
-    // ACTUALLY, this has to be geojson, so let's convert this shit first
+    // ACTUALLY, this has to be geojson, so let's convert this shit first (or do it back on line 64)
     addToMap(json)
   }
 
