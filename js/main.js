@@ -1,7 +1,7 @@
 (function() {
 
-  // source for CSVToArray and CSV2JSON: http://www.bennadel.com/blog/1504-Ask-Ben-Parsing-CSV-Strings-With-Javascript-Exec-Regular-Expression-Command.htm
-  function CSVToArray(strData, strDelimiter) {
+  // Source: http://www.bennadel.com/blog/1504-Ask-Ben-Parsing-CSV-Strings-With-Javascript-Exec-Regular-Expression-Command.htm
+  function csvToArray(strData, strDelimiter) {
     strDelimiter = (strDelimiter || ",");
     var objPattern = new RegExp((
       "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
@@ -25,9 +25,9 @@
     return (arrData);
   }
 
-  // source for CSVToArray and CSV2JSON: http://www.bennadel.com/blog/1504-Ask-Ben-Parsing-CSV-Strings-With-Javascript-Exec-Regular-Expression-Command.htm
-  function CSV2JSON(csv) {
-    var array = CSVToArray(csv);
+  // Source: http://www.bennadel.com/blog/1504-Ask-Ben-Parsing-CSV-Strings-With-Javascript-Exec-Regular-Expression-Command.htm
+  function csvToJSON(csv) {
+    var array = csvToArray(csv);
     var objArray = [];
     for (var i = 1; i < array.length; i++) {
       objArray[i - 1] = {};
@@ -41,7 +41,32 @@
     return str;
   }
 
-  // make map with geoJSON
+  // Source: niggler.github.io/js-xls/
+  function xlsToJSON(workbook) {
+    var result = {};
+    workbook.SheetNames.forEach(function(sheetName) {
+      var roa = XLS.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+      if(roa.length > 0){
+        result[sheetName] = roa;
+      }
+    });
+    return result;
+  }
+
+  // Source: niggler.github.io/js-xlsx/
+  function xlsxToJSON(workbook) {
+    var result = {};
+    workbook.SheetNames.forEach(function(sheetName) {
+      var roa = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+      if(roa.length > 0){
+        result[sheetName] = roa;
+      }
+    });
+    return result;
+  }
+
+  // Make map and add geoJSON
+  // TODO: Symbolize data based on quantitative/qualitative data properties.
   function makeMap(geojson) {
     var geojson = L.geoJson(geojson);
     var map = L.map('map').fitBounds(geojson.getBounds());
@@ -51,9 +76,8 @@
     geojson.addTo(map);
   }
 
-  // make valid geoJSON (from points), add to map
-  // assumes that the "location" key we just added to JSON is the only "location" key
-  // which could be false if the user had a "location" row in spreadsheet originally
+  // Make valid geoJSON
+  // TODO: Don't assume that the "location" key we just added to JSON is the only "location" key.
   function makeGeoJSON(json) {
     var geojson = {"type": "FeatureCollection", "features": []}
     $.each(json, function(index, record) {
@@ -73,11 +97,12 @@
     makeMap(geojson);
   }
 
-  // geocode each record (assumes you had "Address", "City", "State", and "ZIP" columns in CSV for right now)
-  // eventually I want to try to guess which field is which, only ask the user if uncertain/to verify
-  // I will have to ask which row, if any, contains the quantitative/qualititative data
+  // Geocode each record
+  // TODO: Don't depend on test data. Right now we assume the table had "Address", "City", "State", and "ZIP" columns.
+  // TODO: Instead of requiring user input, guess which field is which, only ask the user if uncertain/to verify.
+  // TODO: We will have to ask which row, if any, contains the quantitative/qualititative data to group by/symbolize.
   function geocode(json) {
-    var json = $.parseJSON(json);
+    console.log(json);
     $.when.apply($, $.map(json, function(record, index) {
       var url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=" + record.Address + ", " + record.City + ", " + record.State + " " + record.ZIP
       return $.getJSON(url, function(data) {
@@ -88,21 +113,50 @@
     });
   }
 
-  // handle upload of CSV (and eventually XLS/XLSX with https://github.com/SheetJS/js-xls and https://github.com/SheetJS/js-xlsx)
+  // Handle upload of CSV/XLS/XLSX
+  // TODO: Detect if there's an address to geocode, otherwise assume we're joining the data to geometry for counties/states/countries, detect which it may be, and do that automatically.
+  // TODO: Either combine all sheets in XLS and XLSX files or ask user to choose a sheet (from list of sheets with content).
   $('#fileInput').change(function(event) {
     var file = event.target.files[0];
     var reader = new FileReader()
-    reader.onload = function(e) {
-      var csv = e.target.result;
-      var json = CSV2JSON(csv);
-      // eventually I want to detect if there's an address to geocode, otherwise I'll assume we're joining the data to geometry for counties/states/countries
-      // and try to figure out which it is, do that automatically
-      geocode(json);
+    var regex = /\.[0-9a-z]+$/i;
+
+    if (regex.exec(file.name)[0].toLowerCase() === ".csv") {
+      reader.onload = function(e) {
+          var csv = e.target.result;
+          var json = csvToJSON(csv);
+          json = $.parseJSON(json);
+          geocode(json);
+      }
+      reader.readAsBinaryString(file);
     }
-    reader.onerror = function(e) {
-      console.log("FileReader Error: " + e)
+
+    else if (regex.exec(file.name)[0].toLowerCase() === ".xls") {
+      reader.onload = function(e) {
+          var xls = e.target.result;
+          var cfb = XLS.CFB.read(xls, {type: 'binary'});
+          var wb = XLS.parse_xlscfb(cfb);
+          var json = xlsToJSON(wb);
+          geocode(json.Sheet1);
+      }
+      reader.readAsBinaryString(file);
     }
-    reader.readAsText(file)
+
+    else if ((regex.exec(file.name)[0].toLowerCase() === ".xlsx")) {
+      reader.onload = function(e) {
+          var xlsx = e.target.result;
+          var arr = String.fromCharCode.apply(null, new Uint8Array(xlsx));
+          var wb = XLSX.read(btoa(arr), {type: 'base64'});
+          var json = xlsxToJSON(wb);
+          geocode(json.Sheet1);
+      }
+      reader.readAsBinaryString(file);
+    }
+
+    else {
+      console.log("The file you're uploading isn't a CSV, XLS, or XLSX.");
+    }
+
   });
 
 })();
