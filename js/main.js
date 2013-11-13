@@ -129,7 +129,7 @@
   }
 
   // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function
-  // TODO: For address and city cases (the ones we're geocoding), I need to only attach other properties which exist for geocoding.
+  // TODO: For address and city cases (the ones we're geocoding), we need to only concenate properties which actually exist.
   function parseFields(json) {
     var sampleRecord = json[0]
     var keyMap = {
@@ -142,7 +142,6 @@
       latitude: ["lat", "latitude"],
       longitude: ["lng", "long", "longitude"]
     };
-
     function findProperty(type, record) {
       return _.find(record, function(val, key) {
         keyOpportunities = (keyMap[type]);
@@ -151,7 +150,6 @@
         });
       });
     }
-
     if (findProperty("latitude", sampleRecord) && findProperty("longitude", sampleRecord)) {
       makeGeoJSON(json)
     } else if (findProperty("address", sampleRecord)) {
@@ -164,10 +162,10 @@
         record.geocode = findProperty("city", record) + ", " + findProperty("state", record)
       });
       geocode(json);
-    } else if (findProperty("state", sampleRecord) || (findProperty("zip", sampleRecord) || (findProperty("country", sampleRecord) || (findProperty("county", sampleRecord)) {
+    } else if (findProperty("state", sampleRecord) || findProperty("zip", sampleRecord) || findProperty("country", sampleRecord) || findProperty("county", sampleRecord)) {
       joinToGeometry(json);
     } else {
-      console.log("This is where we should be showing dropdowns to let the user specify which field is which.")
+      console.log("Couldn't tell which fields were which.")
     }
   }
 
