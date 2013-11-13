@@ -68,14 +68,17 @@
   // Make map and add geoJSON
   // TODO: We will have to ask which row, if any, contains the quantitative/qualititative data to group by/symbolize.
   // TODO: Symbolize data based on quantitative/qualitative data properties.
-  // TODO: Show all feature properties in popup.
   // TODO: Add ability to search for points within a given distance of user input.
   // TODO: Allow filtering of data on the map.
   // TODO: Add an option to fix our assumptions about fields and geocode again, join to different geometry, or address failed geocodes.
   function makeMap(geojson) {
     var geojson = L.geoJson(geojson, {
       onEachFeature: function(feature, layer) {
-        layer.bindPopup(feature.properties.Address);
+        textBlob = ""
+        $.each(feature.properties, function(key, value) {
+          textBlob = textBlob + key + ": " + value + "<br>";
+        });
+        layer.bindPopup(textBlob);
       }
     });
     var map = L.map('map').fitBounds(geojson.getBounds());
@@ -87,8 +90,6 @@
 
   // Make valid geoJSON
   // TODO: Don't assume that the "location" key we just added to JSON is the only "location" key.
-  // TODO: Allow for other lat/long to be in places we didn't put it (if passed directly from parseFields).
-  // TODO: Remove location property from properties in geoJSON.
   function makeGeoJSON(json) {
     var geojson = {"type": "FeatureCollection", "features": []}
     $.each(json, function(index, record) {
@@ -103,6 +104,10 @@
           ]
         }
       };
+      delete feature.properties.location
+      delete feature.properties.location_type
+      delete feature.properties.viewport
+      delete feature.properties.geocode
       geojson.features.push(feature);
     });
     makeMap(geojson);
@@ -110,7 +115,6 @@
 
   // Geocode each record
   // TODO: Put failed geocodes somewhere that the user can see and edit them/try to geocode them again.
-  // TODO: Remove geocode property from JSON after we add the location property.
   function geocode(json) {
     $.when.apply($, $.map(json, function(record, index) {
       var url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=" + record.geocode;
@@ -129,7 +133,7 @@
   }
 
   // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function
-  // TODO: For address and city cases (the ones we're geocoding), we need to only concenate properties which actually exist.
+  // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
   function parseFields(json) {
     var sampleRecord = json[0]
     var keyMap = {
@@ -151,6 +155,9 @@
       });
     }
     if (findProperty("latitude", sampleRecord) && findProperty("longitude", sampleRecord)) {
+      $.each(json, function(index, record) {
+        record.location = {"lat": findProperty("latitude", sampleRecord), "lng": findProperty("latitude", sampleRecord)};
+      });
       makeGeoJSON(json)
     } else if (findProperty("address", sampleRecord)) {
       $.each(json, function(index, record) {
