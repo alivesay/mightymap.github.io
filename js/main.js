@@ -86,10 +86,12 @@
       attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     geojson.addTo(map);
+    $('#input').hide();
+    $('#map').show();
+    $('#toggles').show();
   }
 
   // Make valid geoJSON
-  // TODO: Don't assume that the "location" key we just added to JSON is the only "location" key.
   function makeGeoJSON(json) {
     var geojson = {"type": "FeatureCollection", "features": []}
     $.each(json, function(index, record) {
@@ -99,15 +101,15 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            record.location.lng,
-            record.location.lat
+            record.lng,
+            record.lat
           ]
         }
       };
-      delete feature.properties.location
-      delete feature.properties.location_type
-      delete feature.properties.viewport
-      delete feature.properties.geocode
+      delete feature.properties.lat;
+      delete feature.properties.lng;
+      delete feature.properties.geocode;
+      delete feature.properties.__rowNum__;
       geojson.features.push(feature);
     });
     makeMap(geojson);
@@ -119,7 +121,7 @@
     $.when.apply($, $.map(json, function(record, index) {
       var url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=" + record.geocode;
       return $.getJSON(url, function(data) {
-        $.extend(json[index], data.results[0].geometry);
+        $.extend(json[index], data.results[0].geometry.location);
       });
     })).done(function() {
       makeGeoJSON(json);
@@ -127,13 +129,36 @@
   }
 
   // Take JSON and attach it to appropriate country/state/county/ZIP/area code geoJSON
-  // TODO: Everything.
-  function joinToGeometry(json) {
-    return true;
+  // TODO: Make the $.each() function actually work to loop through and put JSON data in properties of appropriate feature.
+  // TODO: Record source of geoJSON as comments in geoJSON files.
+  function joinToGeometry(json, type, typeProperty) {
+    console.log(type);
+    console.log(typeProperty);
+    // function findRecord(type, record) {
+    //   return _.find(record, function(val, key) {
+    //     keyOpportunities = (keyMap[type]);
+    //     return _.find(keyOpportunities, function(keyOption) {
+    //       return(keyOption === key.toLowerCase());
+    //     });
+    //   });
+    // }
+    if (type === "states") {
+      $.each(states, function(index, state) {
+        console.log(state)
+        // state.properties = find(state.name) in json
+      });
+    } else if (type === "country") {
+      $.each(states, function(index, state) {
+        country.properties = find(state.name) in json
+      });
+    }
   }
 
   // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function
   // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
+  // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on this solution.
+  // TODO: Think about options for joinToGeometry case. Right now we check for any of several geometry types you might join to, then just pick the first one that matches (semi-randomly) to actually join.
+  // TODO: Actually handle the else case by allowing the user to select which fields are which.
   function parseFields(json) {
     var sampleRecord = json[0]
     var keyMap = {
@@ -148,7 +173,7 @@
     };
     function findProperty(type, record) {
       return _.find(record, function(val, key) {
-        keyOpportunities = (keyMap[type]);
+        var keyOpportunities = (keyMap[type]);
         return _.find(keyOpportunities, function(keyOption) {
           return(keyOption === key.toLowerCase());
         });
@@ -156,10 +181,12 @@
     }
     if (findProperty("latitude", sampleRecord) && findProperty("longitude", sampleRecord)) {
       $.each(json, function(index, record) {
-        record.location = {"lat": findProperty("latitude", sampleRecord), "lng": findProperty("latitude", sampleRecord)};
+        record.lat = {"lat": findProperty("latitude", sampleRecord)};
+        record.lng = {"lng": findProperty("latitude", sampleRecord)};
       });
       makeGeoJSON(json)
     } else if (findProperty("address", sampleRecord)) {
+      console.log(findProperty("address", sampleRecord));
       $.each(json, function(index, record) {
         record.geocode = findProperty("address", record) + ", " + findProperty("city", record) + ", " + findProperty("state", record) + " " + findProperty("zip", record);
       });
@@ -170,7 +197,22 @@
       });
       geocode(json);
     } else if (findProperty("state", sampleRecord) || findProperty("zip", sampleRecord) || findProperty("country", sampleRecord) || findProperty("county", sampleRecord)) {
-      joinToGeometry(json);
+      var type = "";
+      var typeProperty = "";
+      if (findProperty("state", sampleRecord)) {
+        type = "state";
+        typeProperty = findProperty("state", sampleRecord);
+      } else if (findProperty("zip", sampleRecord)) {
+        type = "zip";
+        typeProperty = findProperty("zip", sampleRecord);
+      } else if (findProperty("country", sampleRecord)) {
+        type = "country";
+        typeProperty = findProperty("country", sampleRecord);
+      } else if (findProperty("county", sampleRecord)) {
+        type = "county";
+        typeProperty = findProperty("county", sampleRecord);
+      }
+      joinToGeometry(json, type, typeProperty);
     } else {
       console.log("Couldn't tell which fields were which.")
     }
@@ -178,6 +220,7 @@
 
   // Handle upload of CSV/XLS/XLSX
   // TODO: Either combine all sheets in XLS and XLSX files or ask user to choose a sheet from list of sheets with content.
+  // TODO: Add SHP, JSON, geoJSON support. Use https://github.com/calvinmetcalf/shapefile-js for SHP.
   $('#fileInput').change(function(event) {
     var file = event.target.files[0];
     var reader = new FileReader()
