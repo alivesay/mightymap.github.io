@@ -71,6 +71,7 @@
   // TODO: Add ability to search for points within a given distance of user input.
   // TODO: Allow filtering of data on the map.
   // TODO: Add an option to fix our assumptions about fields and geocode again, join to different geometry, or address failed geocodes.
+  // TODO: Similarly to fixing geocodes, users have to be able to join specific records to geometry in case not all fields matched up perfectly.
   function makeMap(geojson) {
     var geojson = L.geoJson(geojson, {
       onEachFeature: function(feature, layer) {
@@ -129,38 +130,34 @@
   }
 
   // Take JSON and attach it to appropriate country/state/county/ZIP/area code geoJSON
-  // TODO: Make the $.each() function actually work to loop through and put JSON data in properties of appropriate feature.
   // TODO: Record source of geoJSON as comments in geoJSON files.
-  function joinToGeometry(json, type, typeProperty) {
-    console.log(type);
-    console.log(typeProperty);
-    // function findRecord(type, record) {
-    //   return _.find(record, function(val, key) {
-    //     keyOpportunities = (keyMap[type]);
-    //     return _.find(keyOpportunities, function(keyOption) {
-    //       return(keyOption === key.toLowerCase());
-    //     });
-    //   });
-    // }
-    if (type === "states") {
-      $.each(states, function(index, state) {
-        console.log(state)
-        // state.properties = find(state.name) in json
-      });
+  // TODO: Pass the key for the given type as a property (in case it's user-defined rather than divined by parseFields). This will replace findProperty call.
+  // TODO: Also search abbreviations if the initial pass fails.
+  function joinToGeometry(json, type) {
+    if (type === "state") {
+      var statesOrWhatever = statesAndProvinces;
     } else if (type === "country") {
-      $.each(states, function(index, state) {
-        country.properties = find(state.name) in json
-      });
+      var statesOrWhatever = countries;
     }
+    var geojson = {"type": "FeatureCollection", "features": []};
+    $.each(json, function(index, record) {
+      typeName = findProperty(type, record);
+      $.each(statesOrWhatever.features, function(index, feature) {
+        if (typeName.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase() === feature.properties.name.toLowerCase()) {
+          var feature = {
+            "type": "Feature",
+            "properties": record,
+            "geometry": feature.geometry
+          };
+          geojson.features.push(feature);
+        }
+      });
+    });
+    makeMap(geojson);
   }
 
-  // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function
-  // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
-  // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on this solution.
-  // TODO: Think about options for joinToGeometry case. Right now we check for any of several geometry types you might join to, then just pick the first one that matches (semi-randomly) to actually join.
-  // TODO: Actually handle the else case by allowing the user to select which fields are which.
-  function parseFields(json) {
-    var sampleRecord = json[0]
+  // Checks if any keys of given record match values in keyMap, returns value of matching key
+  function findProperty(type, record) {
     var keyMap = {
       address: ["address", "addr", "add"],
       city: ["city"],
@@ -169,16 +166,23 @@
       county: ["county"],
       country: ["country"],
       latitude: ["lat", "latitude"],
-      longitude: ["lng", "long", "longitude"]
+      longitude: ["lon", "lng", "long", "longitude"]
     };
-    function findProperty(type, record) {
-      return _.find(record, function(val, key) {
-        var keyOpportunities = (keyMap[type]);
-        return _.find(keyOpportunities, function(keyOption) {
-          return(keyOption === key.toLowerCase());
-        });
+    return _.find(record, function(val, key) {
+      var keyTypes = (keyMap[type]);
+      return _.find(keyTypes, function(keyOption) {
+        return(keyOption === key.toLowerCase());
       });
-    }
+    });
+  }
+
+  // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function
+  // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
+  // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on just checking against a handful of possible column names.
+  // TODO: Think about options for joinToGeometry case. Right now we check for any of several geometry types you might join to, then just go from smallest to biggest option looking for a match.
+  // TODO: Actually handle the else case by allowing the user to select which fields are which.
+  function parseFields(json) {
+    var sampleRecord = json[0]
     if (findProperty("latitude", sampleRecord) && findProperty("longitude", sampleRecord)) {
       $.each(json, function(index, record) {
         record.lat = {"lat": findProperty("latitude", sampleRecord)};
@@ -198,21 +202,16 @@
       geocode(json);
     } else if (findProperty("state", sampleRecord) || findProperty("zip", sampleRecord) || findProperty("country", sampleRecord) || findProperty("county", sampleRecord)) {
       var type = "";
-      var typeProperty = "";
-      if (findProperty("state", sampleRecord)) {
-        type = "state";
-        typeProperty = findProperty("state", sampleRecord);
-      } else if (findProperty("zip", sampleRecord)) {
+      if (findProperty("zip", sampleRecord)) {
         type = "zip";
-        typeProperty = findProperty("zip", sampleRecord);
-      } else if (findProperty("country", sampleRecord)) {
-        type = "country";
-        typeProperty = findProperty("country", sampleRecord);
       } else if (findProperty("county", sampleRecord)) {
         type = "county";
-        typeProperty = findProperty("county", sampleRecord);
+      } else if (findProperty("state", sampleRecord)) {
+        type = "state";
+      } else if (findProperty("country", sampleRecord)) {
+        type = "county";
       }
-      joinToGeometry(json, type, typeProperty);
+      joinToGeometry(json, type);
     } else {
       console.log("Couldn't tell which fields were which.")
     }
