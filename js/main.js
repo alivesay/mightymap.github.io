@@ -66,6 +66,7 @@
   }
 
   // Make map and add geoJSON
+  // TODO: Map not rendering geoJSON layer initially nor setting bounds correctly. Fix this.
   // TODO: We will have to ask which row, if any, contains the quantitative/qualititative data to group by/symbolize.
   // TODO: Symbolize data based on quantitative/qualitative data properties.
   // TODO: Add ability to search for points within a given distance of user input.
@@ -134,22 +135,28 @@
   // TODO: Pass the key for the given type as a property (in case it's user-defined rather than divined by parseFields). This will replace findProperty call.
   // TODO: Also search abbreviations if the initial pass fails.
   function joinToGeometry(json, type) {
-    if (type === "state") {
-      var statesOrWhatever = statesAndProvinces;
-    } else if (type === "country") {
-      var statesOrWhatever = countries;
+    var features = {};
+    if (findProperty("zip", sampleRecord)) {
+      features = {};
+    } else if (findProperty("county", sampleRecord)) {
+      features = {};
+    } else if (findProperty("state", sampleRecord)) {
+      features = statesAndProvinces.features;
+    } else if (findProperty("country", sampleRecord)) {
+      features = countries.features;
     }
     var geojson = {"type": "FeatureCollection", "features": []};
     $.each(json, function(index, record) {
-      typeName = findProperty(type, record);
-      $.each(statesOrWhatever.features, function(index, feature) {
-        if (typeName.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase() === feature.properties.name.toLowerCase()) {
+      recordName = findProperty(type, record);
+      $.each(features, function(index, feature) {
+        if (recordName.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase() === feature.properties.name.toLowerCase()) {
           var feature = {
             "type": "Feature",
             "properties": record,
             "geometry": feature.geometry
           };
           geojson.features.push(feature);
+          break;
         }
       });
     });
