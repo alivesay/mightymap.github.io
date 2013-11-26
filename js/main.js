@@ -66,13 +66,7 @@
   }
 
   // Make map and add geoJSON
-  // TODO: Map not rendering geoJSON layer initially nor setting bounds correctly. Fix this.
-  // TODO: We will have to ask which row, if any, contains the quantitative/qualititative data to group by/symbolize.
-  // TODO: Symbolize data based on quantitative/qualitative data properties.
-  // TODO: Add ability to search for points within a given distance of user input.
-  // TODO: Allow filtering of data on the map.
-  // TODO: Add an option to fix our assumptions about fields and geocode again, join to different geometry, or address failed geocodes.
-  // TODO: Similarly to fixing geocodes, users have to be able to join specific records to geometry in case not all fields matched up perfectly.
+  // TODO: Map not rendering geoJSON layer initially nor setting bounds correctly. I think it's a race condition - the geojson object I'm passing in isn't formatted yet since $.each just returns a promise.
   function makeMap(geojson) {
     var geojson = L.geoJson(geojson, {
       onEachFeature: function(feature, layer) {
@@ -183,6 +177,14 @@
     });
   }
 
+  // Allows the user the choose which fields get geocoded/joined to geometry.
+  // TODO: Write function.
+  function selectFields(json) {
+    // Ask if the user wants to geocode points or join to geometry.
+    // If geocoding points, let them build their geocode query a la geojson.io - with a drag and drop interface using their column names.
+    // If joining to geometry, have drop down of the geometry we've got on file and then drop down of the column we can match it to.
+  }
+
   // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function
   // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
   // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on just checking against a handful of possible column names.
@@ -220,7 +222,7 @@
       }
       joinToGeometry(json, type);
     } else {
-      console.log("Couldn't tell which fields were which.")
+      selectFields(json);
     }
   }
 
