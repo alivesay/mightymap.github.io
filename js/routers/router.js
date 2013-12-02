@@ -11,7 +11,11 @@ window.router = Backbone.Router.extend({
   },
 
   mapMaker: function() {
-    this.mapMaker = new window.mapMakerView();
+    if (window.map.geojson) {
+      this.mapMaker = new window.mapMakerView();
+    } else {
+      window.app.navigate("");
+    }
   }
 
 });
