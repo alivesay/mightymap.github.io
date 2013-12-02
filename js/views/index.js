@@ -17,7 +17,7 @@ window.indexView = Backbone.View.extend({
   // Render the view's template.
   render: function() {
     var self = this;
-    $.get("../templates/index.html", function(data) {
+    $.get("js/templates/index.html", function(data) {
       $(self.el).html(data);
     });
   },
