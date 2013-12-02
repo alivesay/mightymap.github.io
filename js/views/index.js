@@ -11,7 +11,7 @@ window.indexView = Backbone.View.extend({
 
   // Initialize view.
   initialize: function() {
-    this.render()
+    this.render();
   },
 
   // Render the view's template.

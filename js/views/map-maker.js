@@ -9,7 +9,8 @@ window.mapMakerView = Backbone.View.extend({
 
   // Initialize view.
   initialize: function() {
-    this.render()
+    this.render();
+    makeMap();
   },
 
   // Render the view's template.
@@ -20,7 +21,7 @@ window.mapMakerView = Backbone.View.extend({
     });
   },
 
-  // Make map and add geoJSON.
+  // Make map and add geoJSON. Assumes map model has been instantiated, geojson object attached to model.
   // TODO: Map not rendering geoJSON layer initially nor setting bounds correctly. I think it's a race condition - the geojson object I'm passing in isn't formatted yet since $.each just returns a promise.
   makeMap: function() {
     var geojson = L.geoJson(window.map.geojson, {

@@ -11,7 +11,7 @@ window.router = Backbone.Router.extend({
   },
 
   mapMaker: function() {
-    this.mapMaker = new window.mapMakerView()
+    this.mapMaker = new window.mapMakerView();
   }
 
 });
