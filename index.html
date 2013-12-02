@@ -11,23 +11,7 @@
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css">
   </head>
   <body>
-    <div id="input">
-      <p>Choose a local CSV, XLS, or XLSX file</p>
-      <input type="file" id="fileInput">
-    </div>
-    <div id="map"></div>
-    <div id="toggles">
-      <h3>Symbolize data by (insert dropdown of fields here).</h3>
-      <h3>Also a toggle for qualitative vs. quantitative.</h3>
-      <h3>Search for points within X miles of (field for address).</h3>
-      <h3>Maybe an option to drop a pin and search within X miles of that, too.</h3>
-      <h3>Filter data that's being symbolized.</h3>
-      <h3>Fix assumptions about fields and geocode again, join to different geometry, or address failed geocodes.</h3>
-      <h3>Go back to main page/upload a different spreadsheet.</h3>
-    </div>
-    <div id="legend">
-      <h3>If data is smybolized, add a legend.</h3>
-    </div>
+    <div id="container"></div>
     <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
     <script src="js/geojson/countries.js"></script>
     <script src="js/geojson/states_and_provinces.js"></script>
@@ -37,7 +21,13 @@
     <script src="js/vendor/xls.js"></script>
     <script src="js/vendor/xlsx.js"></script>
     <script src="js/vendor/backbone.js"></script>
-    <script src="js/plugins.js"></script>
+    <script src="js/vendor/plugins.js"></script>
+    <script src="js/models/map.js"></script>
+    <script src="js/templates/index.js"></script>
+    <script src="js/templates/map-maker.js"></script>
+    <script src="js/views/index.js"></script>
+    <script src="js/views/map-maker.js"></script>
+    <script src="js/routers/router.js"></script>
     <script src="js/main.js"></script>
     <script>
       (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
