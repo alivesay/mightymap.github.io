@@ -20,7 +20,8 @@
 
   // Dashboard will be what users see when they log in. Should show all the maps associated with user, number of views on each.
   // window.dashboardView = Backbone.View.extend();
-   
+  
+  // Instantiates the router, begins recording history so back button works appropriately.
   window.app = new window.router();
   Backbone.history.start();
 

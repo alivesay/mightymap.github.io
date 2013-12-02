@@ -1,4 +1,4 @@
-// Index view will manage landing page, file upload, JSON parsing, etc. That includes handling uploads which failed to parse.
+// Index view manages landing page, file upload, JSON parsing, etc. That includes handling uploads which failed to parse.
 window.indexView = Backbone.View.extend({
 
   // Element the view is attached to.
