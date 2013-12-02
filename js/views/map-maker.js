@@ -28,8 +28,12 @@ window.mapMakerView = Backbone.View.extend({
   // Render the view's template.
   render: function() {
     var self = this;
-    $.get("js/templates/map-maker.html", function(data) {
-      $(self.el).html(data);
+    $.ajax({
+      url: "js/templates/map-maker.html",
+      async: false,
+      success: function(data) {
+        $(self.el).html(data);
+      }
     });
   },
 
