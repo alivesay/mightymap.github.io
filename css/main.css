@@ -5,12 +5,3 @@ html, body {
 #map {
   height: 100%;
 }
-
-#toggles {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 200px;
-  font-size: 10px;
-  background-color: #fff;
-}

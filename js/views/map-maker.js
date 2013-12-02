@@ -1,4 +1,16 @@
 // Map maker view will manage map creation.
+// TODO: Add option to symbolize data by one of the fields.
+// TODO: Also a wizard that lets them choose what type of map (or how they want to symbolize their data). Think heat map, graduated symbols, proportional symbols, choropleth for quantitative data, simple color coding for qualitative data.
+// TODO: Add ability to search for points within X miles of given address/point.
+// TODO: Maybe add an option to drop a pin and search within X miles of that, too.
+// TODO: Add ability to filter the data that's being symbolized (drop high/low values, etc.).
+// TODO: Add ability to correct the app's assumptions about fields and geocode again or join to different geometry.
+// TODO: Add ability to address failed geocodes.
+// TODO: Add link back to main page/ability to upload a different spreadsheet.
+// TODO: Add ability to save map to account.
+// TODO: Add links to share map.
+// TODO: Add ability to print/save a PDF of the map.
+// TODO: Add legend if data is symbolized.
 window.mapMakerView = Backbone.View.extend({
 
   // Element the view is attached to.
