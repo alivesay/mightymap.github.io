@@ -16,6 +16,49 @@
       <p>Choose a local CSV, XLS, or XLSX file</p>
       <input type='file' id='fileInput'>
     </script>
+    <script id="select-fields-template" type="text/template">
+      // Show two links for points and polygons.
+      <a id="points" href="#">Points</a>
+      <a id="polygons" href="#">Polygons</a>
+      // If points, show select elements for address, city, state, county, ZIP, country, some instructions, and a button to go.
+      <form id="points-form">
+        <select id="address">
+          <option value="">Address</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+        </select>
+        <select id="city">
+          <option value="">City</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+        </select>
+        <select id="state">
+          <option value="">State</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+        </select>
+        <select id="county">
+          <option value="">County</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+        </select>
+        <select id="zip">
+          <option value="">ZIP</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+        </select>
+        <select id="country">
+          <option value="">Country</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+        </select>
+        <input type="button" value="Submit">
+      </form>
+      // If polygons, show a select element for the various geometry we have available to join to and a select element showing all the column names from their data.
+      <form id="polygon-form">
+        <select id="geometry">
+          <option value="">Geometry</option>
+        </select>
+        <select id="column">
+          <option value="">Column</option>
+        </select>
+        <input type="button" value="Submit">
+      </form>
+    </script>
     <script id="map-maker-template" type="text/template">
       <div id='map'></div>
     </script>
@@ -31,6 +74,7 @@
     <script src="js/vendor/plugins.js"></script>
     <script src="js/models/map.js"></script>
     <script src="js/views/index.js"></script>
+    <script src="js/views/select-fields.js"></script>
     <script src="js/views/map-maker.js"></script>
     <script src="js/main.js"></script>
     <script>

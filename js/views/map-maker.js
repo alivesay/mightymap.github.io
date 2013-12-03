@@ -21,7 +21,7 @@ window.mapMakerView = Backbone.View.extend({
 
   // Initialize view.
   initialize: function() {
-    this.model.on('change', this.render, this);
+    this.model.on('change:geojson', this.render, this);
   },
 
   // Render the view's template.

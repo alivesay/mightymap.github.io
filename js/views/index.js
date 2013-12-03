@@ -1,4 +1,9 @@
 // Index view manages landing page, file upload, JSON parsing, etc. That includes handling uploads which failed to parse.
+// TODO: Store the field that was used to geocode/join to geometry on the model. Then the user can change it in the map maker view.
+// TODO: Store failed geocodes on the model.
+// TODO: Store leftover features that didn't join to some geometry on the model.
+// TODO: Hook up analytics for real.
+// TODO: Add Olark or similar chat support.
 window.indexView = Backbone.View.extend({
 
   // Element the view is attached to.
@@ -107,6 +112,7 @@ window.indexView = Backbone.View.extend({
       delete feature.properties.__rowNum__;
       geojson.features.push(feature);
     });
+    // The mapMaker view is listening to changes on geojson attribute.
     this.model.set({"geojson": geojson});
   },
 
@@ -126,7 +132,8 @@ window.indexView = Backbone.View.extend({
 
   // Take JSON and attach it to appropriate country/state/county/ZIP/area code geoJSON.
   // TODO: Pass the key for the given type as a property (in case it's user-defined rather than divined by parseFields). This will replace this.findProperty call.
-  // TODO: Also search abbreviations if the initial pass fails.
+  // TODO: If a record name is a 90% match to a feature name, join them.
+  // TODO: Also search feature abbreviations if the initial pass over feature names fails.
   // TODO: Figure out why the break statement throws an error.
   joinToGeometry: function(json, type) {
     var features = {};
@@ -156,6 +163,7 @@ window.indexView = Backbone.View.extend({
         }
       });
     });
+    // The mapMaker view is listening to changes on geojson attribute.
     this.model.set({"geojson": geojson});
   },
 
@@ -179,19 +187,10 @@ window.indexView = Backbone.View.extend({
     });
   },
 
-  // Allows the user the choose which fields get geocoded/joined to geometry.
-  // TODO: Write function.
-  selectFields: function(json) {
-    // Ask if the user wants to geocode points or join to geometry.
-    // If geocoding points, let them build their geocode query a la geojson.io - with a drag and drop interface using their column names.
-    // If joining to geometry, have drop down of the geometry we've got on file and then drop down of the column we can match it to.
-  },
-
   // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function.
   // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
-  // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on just checking against a handful of possible column names.
+  // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on just checking against a handful of possible column names. What if I compared each record to a list of city names or state names or whatever, and if I get >50% hits assume it's correct?
   // TODO: Think about options for joinToGeometry case. Right now we check for any of several geometry types you might join to, then just go from smallest to biggest option looking for a match.
-  // TODO: Actually handle the else case by allowing the user to select which fields are which.
   parseFields: function(json) {
     var sampleRecord = json[0];
     var self = this;
@@ -224,7 +223,8 @@ window.indexView = Backbone.View.extend({
       }
       self.joinToGeometry(json, type);
     } else {
-      self.selectFields(json);
+      // The selectFields view is listening to changes on json attribute.
+      this.model.set({"json": json});
     }
   },
 
