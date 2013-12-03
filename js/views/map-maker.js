@@ -21,8 +21,8 @@ window.mapMakerView = Backbone.View.extend({
 
   // Initialize view.
   initialize: function() {
-    this.render();
-    this.makeMap();
+    console.log(this.model)
+    this.model.on('change', this.render, this);
   },
 
   // Render the view's template.

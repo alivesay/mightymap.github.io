@@ -6,7 +6,7 @@ window.indexView = Backbone.View.extend({
 
   // Handle events.
   events: {
-    "change #fileInput" : "handleUpload"
+    "change #fileInput": "handleUpload"
   },
 
   // Initialize view.
@@ -92,12 +92,6 @@ window.indexView = Backbone.View.extend({
     return result;
   },
 
-  navigateToMapMaker: function(geojson) {
-    window.map = new window.mapModel;
-    window.map.geojson = geojson;
-    window.app.navigate("//mapmaker");
-  },
-
   // Make valid geoJSON.
   makeGeoJSON: function(json) {
     var self = this;
@@ -120,7 +114,7 @@ window.indexView = Backbone.View.extend({
       delete feature.properties.__rowNum__;
       geojson.features.push(feature);
     });
-    self.navigateToMapMaker(geojson);
+    window.map.geojson = geojson;
   },
 
   // Geocode each record.
@@ -169,7 +163,7 @@ window.indexView = Backbone.View.extend({
         }
       });
     });
-    self.navigateToMapMaker(geojson);
+    window.map.geojson = geojson;
   },
 
   // Checks if any keys of given record match values in keyMap, returns value associated with matching key.
