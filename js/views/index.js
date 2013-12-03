@@ -117,7 +117,7 @@ window.indexView = Backbone.View.extend({
       delete feature.properties.__rowNum__;
       geojson.features.push(feature);
     });
-    window.map.set("geojson": geojson);
+    window.map.set({"geojson": geojson});
   },
 
   // Geocode each record.
@@ -166,7 +166,7 @@ window.indexView = Backbone.View.extend({
         }
       });
     });
-    window.map.set("geojson": geojson);
+    window.map.set({"geojson": geojson});
   },
 
   // Checks if any keys of given record match values in keyMap, returns value associated with matching key.
