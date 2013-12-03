@@ -4,9 +4,6 @@ window.indexView = Backbone.View.extend({
   // Element the view is attached to.
   el: '#container',
 
-  // Model the view is associated with.
-  model: window.map,
-
   // Handle events.
   events: {
     "change #fileInput": "handleUpload"
@@ -19,14 +16,7 @@ window.indexView = Backbone.View.extend({
 
   // Render the view's template.
   render: function() {
-    var self = this;
-    $.ajax({
-      url: "js/templates/index.html",
-      async: false,
-      success: function(data) {
-        $(self.el).html(data);
-      }
-    });
+    $(this.el).html(_.template($("#index-template").html()));
   },
 
   // Source: http://www.bennadel.com/blog/1504-Ask-Ben-Parsing-CSV-Strings-With-Javascript-Exec-Regular-Expression-Command.htm
@@ -117,7 +107,7 @@ window.indexView = Backbone.View.extend({
       delete feature.properties.__rowNum__;
       geojson.features.push(feature);
     });
-    window.map.set({"geojson": geojson});
+    this.model.set({"geojson": geojson});
   },
 
   // Geocode each record.
@@ -166,7 +156,7 @@ window.indexView = Backbone.View.extend({
         }
       });
     });
-    window.map.set({"geojson": geojson});
+    this.model.set({"geojson": geojson});
   },
 
   // Checks if any keys of given record match values in keyMap, returns value associated with matching key.
