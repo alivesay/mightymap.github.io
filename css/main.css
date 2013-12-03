@@ -1,7 +1,3 @@
-html, body {
-  height: 100%;
-}
-
-#map {
+html, body, #container, #map {
   height: 100%;
 }
