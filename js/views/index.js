@@ -4,6 +4,9 @@ window.indexView = Backbone.View.extend({
   // Element the view is attached to.
   el: '#container',
 
+  // Model the view is associated with.
+  model: window.map,
+
   // Handle events.
   events: {
     "change #fileInput": "handleUpload"
