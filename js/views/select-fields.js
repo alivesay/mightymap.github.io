@@ -13,7 +13,7 @@ window.selectFieldsView = Backbone.View.extend({
 
   // Initialize view.
   initialize: function() {
-    this.model.on('change:json', this.render, this);
+    this.model.on('change:fieldsParsed', this.render, this);
   },
 
   // Render the view's template.
