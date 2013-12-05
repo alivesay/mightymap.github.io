@@ -53,8 +53,9 @@
         <select id="geometry">
           <option value="">Geometry</option>
         </select>
-        <select id="column">
-          <option value="">Column</option>
+        <select id="field">
+          <option value="">Field</option>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
         </select>
         <input type="button" value="Submit">
       </form>

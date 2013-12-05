@@ -88,6 +88,7 @@ window.uploadHandlerView = Backbone.View.extend({
   // Handle upload of CSV/XLS/XLSX.
   // TODO: If XLS and XLSX files have multiple sheets, ask user to choose a sheet from list.
   // TODO: Add SHP, JSON, geoJSON support. Use https://github.com/calvinmetcalf/shapefile-js for SHP.
+  // TODO: Actually do something in case of error (either reader error or just if none of the conditions are met).
   handleUpload: function(event) {
     var file = event.target.files[0];
     var reader = new FileReader();

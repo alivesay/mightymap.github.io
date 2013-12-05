@@ -7,77 +7,77 @@
 // TODO: Add Olark or similar chat support.
 window.mapModel = Backbone.Model.extend({
 
+  // Initialize model.
   initialize: function() {
     this.on('change:json', this.parseFields, this);
+    this.on('change:geometryType', this.delegate, this);
   },
 
+  // The geometryType will either be "point" if point data or the type of geometry if polygon data.
   defaults: {
     "json": {},
-    "geojson": {"type": "FeatureCollection", "features": []},
-    "fieldsParsed": true
+    "geometryType": "",
+    "spatialFields": {},
+    "geojson": {"type": "FeatureCollection", "features": []}
   },
 
-  // Make valid geoJSON.
-  makeGeoJSON: function(json) {
+  // Geocode JSON records using spatialFields, set geoJSON.
+  // TODO: Put failed geocodes somewhere that the user can see and edit them/try to geocode them again.
+  geocode: function() {
     var self = this;
-    var geojson = {"type": "FeatureCollection", "features": []}
+    var json = self.get("json");
+    var spatialFields = self.get("spatialFields");
+    var geojson = {"type": "FeatureCollection", "features": []};
+    var geocode = "";
     $.each(json, function(index, record) {
-      var feature = {
-        "type": "Feature",
-        "properties": record,
-        "geometry": {
-          "type": "Point",
-          "coordinates": [
-            record.lng,
-            record.lat
-          ]
-        }
-      };
-      delete feature.properties.lat;
-      delete feature.properties.lng;
-      delete feature.properties.geocode;
-      delete feature.properties.__rowNum__;
-      geojson.features.push(feature);
+      $.each(spatialFields, function(type, field) {
+        geocode = geocode + record[field] + ", ";
+      });
+      var url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=" + geocode;
+      $.getJSON(url, function(data) {
+        var coordinates = data.results[0].geometry.location;
+        var feature = {
+          "type": "Feature",
+          "properties": record,
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              coordinates.lng,
+              coordinates.lat
+            ]
+          }
+        };
+        delete feature.properties.__rowNum__;
+        geojson.features.push(feature);
+      });
     });
     // The mapMaker view is listening to changes on geojson attribute.
     self.set({"geojson": geojson});
   },
 
-  // Geocode each record.
-  // TODO: Put failed geocodes somewhere that the user can see and edit them/try to geocode them again.
-  geocode: function(json) {
-    var self = this;
-    $.when.apply($, $.map(json, function(record, index) {
-      var url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=" + record.geocode;
-      return $.getJSON(url, function(data) {
-        $.extend(json[index], data.results[0].geometry.location);
-      });
-    })).done(function() {
-      self.makeGeoJSON(json);
-    });
-  },
-
   // Take JSON and attach it to appropriate country/state/county/ZIP/area code geoJSON.
   // TODO: Pass the key for the given type as a property (in case it's user-defined rather than divined by parseFields). This will replace this.findProperty call.
   // TODO: If a record name is a 90% match to a feature name, join them.
-  // TODO: Also search feature abbreviations if the initial pass over feature names fails.
+  // TODO: Also search feature abbreviations/alternate names if the initial pass over feature names fails.
   // TODO: Figure out why the break statement throws an error.
-  joinToGeometry: function(json, type) {
-    var features = {};
-    var sampleRecord = json[0];
+  joinToGeometry: function() {
     var self = this;
-    if (self.findProperty("zip", sampleRecord)) {
+    var json = self.get("json");
+    var geometryType = self.get("geometryType");
+    var spatialField = self.get("spatialFields");
+    var features = {};
+    if (geometryType === "zip") {
       features = {};
-    } else if (self.findProperty("county", sampleRecord)) {
+    } else if (geometryType === "county") {
       features = {};
-    } else if (self.findProperty("state", sampleRecord)) {
+    } else if (geometryType === "state") {
       features = statesAndProvinces.features;
-    } else if (self.findProperty("country", sampleRecord)) {
+    } else if (geometryType === "country") {
       features = countries.features;
     }
     var geojson = {"type": "FeatureCollection", "features": []};
     $.each(json, function(index, record) {
-      recordName = self.findProperty(type, record);
+      recordName = record[spatialField];
       $.each(features, function(index, feature) {
         if (recordName.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase() === feature.properties.name.toLowerCase()) {
           var feature = {
@@ -94,65 +94,93 @@ window.mapModel = Backbone.Model.extend({
     self.set({"geojson": geojson});
   },
 
-  // Checks if any keys of given record match values in keyMap, returns value associated with matching key.
-  findProperty: function(type, record) {
+  // Checks if any keys in JSON on model match values in keyMap, returns name of matching key.
+  findProperty: function(type) {
+    var json = this.get("json");
+    var record = json[0];
+    var property = "";
     var keyMap = {
       address: ["address", "addr", "add"],
       city: ["city"],
-      state: ["state"],
+      state: ["state", "province"],
       zip: ["zip", "zipcode", "zip code"],
-      county: ["county"],
-      country: ["country"],
-      latitude: ["lat", "latitude"],
-      longitude: ["lon", "lng", "long", "longitude"]
+      county: ["county", "cnty"],
+      country: ["country", "cntry"],
+      latitude: ["lat", "latitude", "y", "shape.y"],
+      longitude: ["lon", "lng", "long", "longitude", "x", "shape.x"]
     };
-    return _.find(record, function(val, key) {
+    _.find(record, function(val, key) {
       var keyTypes = (keyMap[type]);
-      return _.find(keyTypes, function(keyOption) {
-        return(keyOption === key.toLowerCase());
+      _.find(keyTypes, function(keyOption) {
+        if (keyOption === key.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase()) {
+          property = key;
+        }
       });
     });
+    return property;
   },
 
-  // Parse fields so we don't have to ask user which is which, send JSON on to appropriate function.
-  // TODO: For address and city cases (the ones we're geocoding), we need to only concatenate properties which actually exist.
+  // Called when either geometryType or spatialFields is changed (by parseFields below or selectFields view).
+  delegate: function() {
+    var geometryType = this.get("geometryType");
+    if (geometryType === "point") {
+      this.geocode();
+    } else {
+      this.joinToGeometry();
+    }
+  },
+
+  // Parse fields so we don't have to ask user which is which, set geometryType and spatialFields on model (which will then trigger spatialFieldsDefined).
   // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on just checking against a handful of possible column names. What if I compared each record to a list of city names or state names or whatever, and if I get >50% hits assume it's correct?
-  // TODO: Think about options for joinToGeometry case. Right now we check for any of several geometry types you might join to, then just go from smallest to biggest option looking for a match.
+  // TODO: Think about options for cases where the geometryType isn't points. Right now we check for any of several geometry types you might join to, then just go from smallest to biggest option looking for a match.
+  // TODO: Figure out how to handle JSON that has lat/long data, since bypassing everything isn't going to work. I'd like to set it on the model somehow.
   parseFields: function() {
     var self = this;
     var json = self.get("json");
-    var sampleRecord = json[0];
-    if (self.findProperty("latitude", sampleRecord) && self.findProperty("longitude", sampleRecord)) {
+    var addressField = self.findProperty("address");
+    var cityField = self.findProperty("city");
+    var stateField = self.findProperty("state");
+    var countyField = self.findProperty("county");
+    var zipField = self.findProperty("zip");
+    var countryField = self.findProperty("country");
+    var latitudeField = self.findProperty("latitude");
+    var longitudeField = self.findProperty("longitude");
+    var spatialFields = {};
+    if (latitudeField && longitudeField) {
       $.each(json, function(index, record) {
-        record.lat = {"lat": self.findProperty("latitude", sampleRecord)};
-        record.lng = {"lng": self.findProperty("latitude", sampleRecord)};
+        record.lat = {"lat": record[latitudeField]};
+        record.lng = {"lng": record[longitudeField]};
       });
       self.makeGeoJSON(json)
-    } else if (self.findProperty("address", sampleRecord)) {
-      $.each(json, function(index, record) {
-        record.geocode = self.findProperty("address", record) + ", " + self.findProperty("city", record) + ", " + self.findProperty("state", record) + " " + self.findProperty("zip", record);
-      });
-      self.geocode(json);
-    } else if (self.findProperty("city", sampleRecord)) {
-      $.each(json, function(index, record) {
-        record.geocode = self.findProperty("city", record) + ", " + self.findProperty("state", record)
-      });
-      self.geocode(json);
-    } else if (self.findProperty("state", sampleRecord) || self.findProperty("zip", sampleRecord) || self.findProperty("country", sampleRecord) || self.findProperty("county", sampleRecord)) {
-      var type = "";
-      if (self.findProperty("zip", sampleRecord)) {
-        type = "zip";
-      } else if (self.findProperty("county", sampleRecord)) {
-        type = "county";
-      } else if (self.findProperty("state", sampleRecord)) {
-        type = "state";
-      } else if (self.findProperty("country", sampleRecord)) {
-        type = "county";
+    } else if (addressField) {
+      spatialFields.address = addressField;
+      if (cityField) {
+        spatialFields.city = cityField;
+      } if (stateField) {
+        spatialFields.state = stateField;
+      } if (zipField) {
+        spatialFields.zip = zipField;
       }
-      self.joinToGeometry(json, type);
+      self.set({"geometryType": "point", "spatialFields": spatialFields})
+    } else if (cityField) {
+      spatialFields.city = cityField;
+      if (stateField) {
+        spatialFields.state = stateField;
+      }
+      self.set({"geometryType": "point", "spatialFields": spatialFields})
+    } else if (self.findProperty("state") || self.findProperty("zip") || self.findProperty("country") || self.findProperty("county")) {
+      if (zipField) {
+        self.set({"geometryType": "zip", "spatialFields": zipField})
+      } else if (countyField) {
+        self.set({"geometryType": "county", "spatialFields": countyField})
+      } else if (stateField) {
+        self.set({"geometryType": "state", "spatialFields": stateField})
+      } else if (countryField) {
+        self.set({"geometryType": "country", "spatialFields": countryField})
+      }
     } else {
-      // The selectFields view is listening to changes on json attribute.
-      self.set({"fieldsParsed": false});
+      // Initialize selectFields view.
+      window.selectFields.render();
     }
   }
 
