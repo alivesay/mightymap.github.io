@@ -1,8 +1,7 @@
 // Map model contains JSON set by upload handler, converts that JSON to geoJSON that's also stored on the model. If it can't automagically parse fields to create geoJSON, sets fieldsParsed to false.
 // Map model will eventually also contain number of views, user association, field being symbolized, styles for symbology, etc.
-// TODO: Store the field that was used to geocode/join to geometry on the model. Then the user can change it in the map maker view.
-// TODO: Store failed geocodes on the model.
-// TODO: Store leftover features that didn't join to some geometry on the model.
+// TODO: Store failed geocodes on the model for correction in mapMaker view.
+// TODO: Store leftover features that didn't join to some geometry on the model for correction in mapMaker view.
 // TODO: Hook up analytics for real.
 // TODO: Add Olark or similar chat support.
 window.mapModel = Backbone.Model.extend({
@@ -14,10 +13,16 @@ window.mapModel = Backbone.Model.extend({
   },
 
   // The geometryType will either be "point" if point data or the type of geometry if polygon data.
+  // The spatialFields property is object containing key/value pairs of data type and field name in the data.
+  // TODO: Replace references to geometryType and spatialFields with spatialData, then delete them.
   defaults: {
     "json": {},
     "geometryType": "",
     "spatialFields": {},
+    "spatialData": {
+      "dataType": "",
+      "spatialFields": ""
+    },
     "geojson": {"type": "FeatureCollection", "features": []}
   },
 
@@ -28,38 +33,44 @@ window.mapModel = Backbone.Model.extend({
     var json = self.get("json");
     var spatialFields = self.get("spatialFields");
     var geojson = {"type": "FeatureCollection", "features": []};
-    var geocode = "";
     $.each(json, function(index, record) {
+      var geocode = "";
       $.each(spatialFields, function(type, field) {
         geocode = geocode + record[field] + ", ";
       });
       var url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=" + geocode;
-      $.getJSON(url, function(data) {
-        var coordinates = data.results[0].geometry.location;
-        var feature = {
-          "type": "Feature",
-          "properties": record,
-          "geometry": {
-            "type": "Point",
-            "coordinates": [
-              coordinates.lng,
-              coordinates.lat
-            ]
-          }
-        };
-        delete feature.properties.__rowNum__;
-        geojson.features.push(feature);
+      $.ajax({
+        dataType: "json",
+        url: url,
+        async: false,
+        success: function(data) {
+          var coordinates = data.results[0].geometry.location;
+          var feature = {
+            "type": "Feature",
+            "properties": record,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                coordinates.lng,
+                coordinates.lat
+              ]
+            }
+          };
+          delete feature.properties.__rowNum__;
+          geojson.features.push(feature);
+        }
       });
     });
     // The mapMaker view is listening to changes on geojson attribute.
     self.set({"geojson": geojson});
+    console.log(geojson);
   },
 
   // Take JSON and attach it to appropriate country/state/county/ZIP/area code geoJSON.
-  // TODO: Pass the key for the given type as a property (in case it's user-defined rather than divined by parseFields). This will replace this.findProperty call.
-  // TODO: If a record name is a 90% match to a feature name, join them.
+  // TODO: Currently only looking for exact matches to join user data and geoJSON. Make it so if a record name is a 90% match to a feature name, we join them. 
   // TODO: Also search feature abbreviations/alternate names if the initial pass over feature names fails.
-  // TODO: Figure out why the break statement throws an error.
+  // TODO: Figure out why the break statement throws an error or if there's a similar option to exit the $.each() loop.
+  // TODO: Don't load all the JSON in advance. Use $.getJSON() to get only the file I need.
   joinToGeometry: function() {
     var self = this;
     var json = self.get("json");
@@ -120,7 +131,7 @@ window.mapModel = Backbone.Model.extend({
     return property;
   },
 
-  // Called when either geometryType or spatialFields is changed (by parseFields below or selectFields view).
+  // Called when either geometryType or spatialFields is changed (by parseFields below or selectFields view) to process JSON.
   delegate: function() {
     var geometryType = this.get("geometryType");
     if (geometryType === "point") {
@@ -133,7 +144,7 @@ window.mapModel = Backbone.Model.extend({
   // Parse fields so we don't have to ask user which is which, set geometryType and spatialFields on model (which will then trigger spatialFieldsDefined).
   // TODO: Continue thinking about the best way to try to identify spatial columns in user data. Not super stoked on just checking against a handful of possible column names. What if I compared each record to a list of city names or state names or whatever, and if I get >50% hits assume it's correct?
   // TODO: Think about options for cases where the geometryType isn't points. Right now we check for any of several geometry types you might join to, then just go from smallest to biggest option looking for a match.
-  // TODO: Figure out how to handle JSON that has lat/long data, since bypassing everything isn't going to work. I'd like to set it on the model somehow.
+  // TODO: Figure out how to handle JSON that has lat/long data, since that whole bit is now broken.
   parseFields: function() {
     var self = this;
     var json = self.get("json");
@@ -179,7 +190,7 @@ window.mapModel = Backbone.Model.extend({
         self.set({"geometryType": "country", "spatialFields": countryField})
       }
     } else {
-      // Initialize selectFields view.
+      // Render selectFields view.
       window.selectFields.render();
     }
   }
