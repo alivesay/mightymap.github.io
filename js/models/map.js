@@ -21,7 +21,7 @@ window.mapModel = Backbone.Model.extend({
     "spatialFields": {},
     "spatialData": {
       "dataType": "",
-      "spatialFields": ""
+      "spatialProperties": ""
     },
     "geojson": {"type": "FeatureCollection", "features": []}
   },
@@ -71,6 +71,8 @@ window.mapModel = Backbone.Model.extend({
   // TODO: Also search feature abbreviations/alternate names if the initial pass over feature names fails.
   // TODO: Figure out why the break statement throws an error or if there's a similar option to exit the $.each() loop.
   // TODO: Don't load all the JSON in advance. Use $.getJSON() to get only the file I need.
+  // TODO: Get geoJSON for ZIPs and counties.
+  // TODO: Clean up geoJSON (get rid of all non-essential properties).
   joinToGeometry: function() {
     var self = this;
     var json = self.get("json");
@@ -111,7 +113,7 @@ window.mapModel = Backbone.Model.extend({
     var record = json[0];
     var property = "";
     var keyMap = {
-      address: ["address", "addr", "add"],
+      address: ["address", "addr", "add", "street address", "street_address", "street_addr"],
       city: ["city"],
       state: ["state", "province"],
       zip: ["zip", "zipcode", "zip code"],
