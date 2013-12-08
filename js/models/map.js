@@ -61,14 +61,13 @@ window.mapModel = Backbone.Model.extend({
     });
     // The mapMaker view is listening to changes on geojson attribute.
     self.set({"geojson": geojson});
-    console.log(geojson);
   },
 
   // Gets geoJSON from local server.
   getGeoJSON: function(fileName) {
     $.ajax({
       dataType: "json",
-      url: "geojson/" + fileName,
+      url: "./js/geojson/" + fileName,
       async: false,
       success: function(data) {
         return data;
