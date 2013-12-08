@@ -42,21 +42,21 @@ window.selectFieldsView = Backbone.View.extend({
     var countyField = $("#county", form).find(":selected").text();
     var zipField = $("#zip", form).find(":selected").text();
     var countryField = $("#country", form).find(":selected").text();
-    var spatialFields = {};
+    var spatialProperties = {};
     if (addressField !== "Address") {
-      spatialFields.address = addressField;
+      spatialProperties.address = addressField;
     } if (cityField !== "City") {
-      spatialFields.city = cityField;
+      spatialProperties.city = cityField;
     } if (stateField !== "State") {
-      spatialFields.state = stateField;
+      spatialProperties.state = stateField;
     } if (countyField !== "County") {
-      spatialFields.county = countyField;
+      spatialProperties.county = countyField;
     } if (zip !== "ZIP") {
-      spatialFields.zip = zipField;
+      spatialProperties.zip = zipField;
     } if (countryField !== "Country") {
-      spatialFields.country = countryField;
+      spatialProperties.country = countryField;
     }
-    this.model.set({"geometryType": "point", "spatialFields": spatialFields})
+    this.model.set({"spatialData": {"dataType": "point", "spatialProperties": spatialProperties}});
   },
 
   // Get data from select elements, set that data on the model.
@@ -64,7 +64,7 @@ window.selectFieldsView = Backbone.View.extend({
     var form = $("#points-form");
     var geometry = $("#geometry", form).find(":selected").text();
     var field = $("#field", form).find(":selected").text();
-    this.model.set({"geometryType": geometry, "spatialFields": {geometry: field}})
+    this.model.set({"spatialData": {"dataType": geometry, "spatialProperties": {geometry: field}}});
   }
 
 });
