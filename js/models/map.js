@@ -68,7 +68,7 @@ window.mapModel = Backbone.Model.extend({
   getGeoJSON: function(fileName) {
     $.ajax({
       dataType: "json",
-      url: "/geojson/" + fileName,
+      url: "geojson/" + fileName,
       async: false,
       success: function(data) {
         return data;
