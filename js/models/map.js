@@ -64,13 +64,13 @@ window.mapModel = Backbone.Model.extend({
   },
 
   // Gets geoJSON from local server.
+  // TODO: Figure out why setting dataType to JSON throws parsererror, remove parseJSON call.
   getGeoJSON: function(fileName) {
     $.ajax({
-      dataType: "json",
       url: "js/geojson/" + fileName,
       async: false,
       success: function(data) {
-        return data;
+        return $.parseJSON(data);
       }
     });
   },
