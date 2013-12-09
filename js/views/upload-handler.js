@@ -87,7 +87,7 @@ window.uploadHandlerView = Backbone.View.extend({
 
   // Handle upload of CSV/XLS/XLSX.
   // TODO: If XLS and XLSX files have multiple sheets, ask user to choose a sheet from list.
-  // TODO: Add SHP, JSON, geoJSON support. Use https://github.com/calvinmetcalf/shapefile-js for SHP.
+  // TODO: Test SHP, JSON, geoJSON support. No idea what I'm doing or what method on reader to use.
   // TODO: Actually do something in case of error (either reader error or just if none of the conditions are met).
   handleUpload: function(event) {
     var file = event.target.files[0];
@@ -118,6 +118,33 @@ window.uploadHandlerView = Backbone.View.extend({
         var wb = XLSX.read(btoa(arr), {type: 'base64'});
         var json = self.xlsxToJSON(wb);
         self.model.set({"json": json.Sheet1});
+      }
+      reader.readAsArrayBuffer(file);
+    } else if ((regex.exec(file.name)[0].toLowerCase() === ".zip")) {
+      reader.onload = function(e) {
+        var zip = e.target.result;
+        shp(zip).then(function(geojson) {
+          self.model.set({"geojson": geojson});
+        });
+      }
+      reader.readAsArrayBuffer(file);
+    } else if ((regex.exec(file.name)[0].toLowerCase() === ".shp")) {
+      reader.onload = function(e) {
+        var shp = e.target.result;
+        shp(shp).then(function(geojson) {
+          self.model.set({"geojson": geojson});
+        });
+      }
+      reader.readAsArrayBuffer(file);
+    } else if ((regex.exec(file.name)[0].toLowerCase() === ".json")) {
+      reader.onload = function(e) {
+        var json = e.target.result;
+        self.model.set({"json": json});
+      }
+    } else if ((regex.exec(file.name)[0].toLowerCase() === ".geojson")) {
+      reader.onload = function(e) {
+        var geojson = e.target.result;
+        self.model.set({"geojson": geojson});
       }
       reader.readAsArrayBuffer(file);
     } else {

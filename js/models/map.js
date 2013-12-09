@@ -67,7 +67,7 @@ window.mapModel = Backbone.Model.extend({
   getGeoJSON: function(fileName) {
     $.ajax({
       dataType: "json",
-      url: "./js/geojson/" + fileName,
+      url: "js/geojson/" + fileName,
       async: false,
       success: function(data) {
         return data;
@@ -79,7 +79,6 @@ window.mapModel = Backbone.Model.extend({
   // TODO: Currently only looking for exact matches to join user data and geoJSON. Make it so if a record name is a 90% match to a feature name, we join them. 
   // TODO: Also search feature abbreviations/alternate names if the initial pass over feature names fails.
   // TODO: Figure out why the break statement throws an error or if there's a similar option to exit the $.each() loop.
-  // TODO: Don't load all the JSON in advance. Use $.getJSON() to get only the file I need.
   // TODO: Get geoJSON for ZIPs and counties.
   // TODO: Clean up geoJSON (get rid of all non-essential properties).
   joinToGeoJSON: function() {
