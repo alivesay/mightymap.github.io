@@ -8,10 +8,10 @@ window.selectFieldsView = Backbone.View.extend({
 
   // Handle events.
   events: {
-    // "click #points": "showPointsForm",
-    // "click #polygons": "showPolygonsForm",
-    "click #points-form input": "callGeocode",
-    "click #polygons-form input": "callJoinToGeometry"
+    "click #points": "renderPointsTemplate",
+    "click #polygons": "renderPolygonsTemplate",
+    "click #points-form input": "onPointFormSubmit",
+    "click #polygons-form input": "onPolygonFormSubmit"
   },
 
   // Initialize view.
@@ -19,22 +19,24 @@ window.selectFieldsView = Backbone.View.extend({
 
   // Render the view's template.
   render: function() {
-    $(this.el).html(_.template($("#select-fields-template").html()));
+    $(this.el).html(_.template($("#points-or-polygons").html()));
   },
 
-  // Reveal form that allows user to select which fields to use to geocode.
-  // showPointsForm: function(e) {
-  //   e.preventDefault();
-  // },
+  // Reveal form that allows user to select which properties to use to geocode.
+  renderPointsTemplate: function(e) {
+    e.preventDefault();
+    $(this.el).html(_.template($("#points-template").html()));
+  },
 
   // Reveal form that allows user to select which field to join to which geometry.
-  // showPolygonsForm: function(e) {
-  //   e.preventDefault();
-  // }
+  renderPolygonsTemplate: function(e) {
+    e.preventDefault();
+    $(this.el).html(_.template($("#polygons-template").html()));
+  },
 
   // Get data from select elements, make an object containing spatial fields and their names, and set that data on the model.
   // TODO: I don't like the way I'm matching fields. What if the user's address column is named "Address"? (I realize that woould have been caught by parseFields, but what if they're coming back to correct an error?)
-  callGeocode: function() {
+  onPointFormSubmit: function() {
     var form = $("#points-form");
     var addressField = $("#address", form).find(":selected").text();
     var cityField = $("#city", form).find(":selected").text();
@@ -60,7 +62,7 @@ window.selectFieldsView = Backbone.View.extend({
   },
 
   // Get data from select elements, set that data on the model.
-  callJoinToGeometry: function() {
+  onPolygonFormSubmit: function() {
     var form = $("#points-form");
     var geometry = $("#geometry", form).find(":selected").text();
     var field = $("#field", form).find(":selected").text();

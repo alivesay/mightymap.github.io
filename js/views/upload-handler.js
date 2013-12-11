@@ -16,7 +16,7 @@ window.uploadHandlerView = Backbone.View.extend({
 
   // Render the view's template.
   render: function() {
-    $(this.el).html(_.template($("#upload-handler-template").html()));
+    $(this.el).html(_.template($("#upload-handler").html()));
   },
 
   // Source: http://www.bennadel.com/blog/1504-Ask-Ben-Parsing-CSV-Strings-With-Javascript-Exec-Regular-Expression-Command.htm

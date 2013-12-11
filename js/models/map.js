@@ -20,6 +20,7 @@ window.mapModel = Backbone.Model.extend({
       "dataType": "",
       "spatialProperties": ""
     },
+    "failedJoinsAndGeocodes": {},
     "geojson": {"type": "FeatureCollection", "features": []}
   },
 
@@ -29,6 +30,7 @@ window.mapModel = Backbone.Model.extend({
   geocode: function() {
     var self = this;
     var json = self.get("json");
+    var failedGeocodes = self.get("failedJoinsAndGeocodes");
     var spatialProperties = self.get("spatialData").spatialProperties;
     var geojson = {"type": "FeatureCollection", "features": []};
     $.each(json, function(index, record) {
@@ -43,19 +45,23 @@ window.mapModel = Backbone.Model.extend({
         async: false,
         success: function(data) {
           var coordinates = data.results[0].geometry.location;
-          var feature = {
-            "type": "Feature",
-            "properties": record,
-            "geometry": {
-              "type": "Point",
-              "coordinates": [
-                coordinates.lng,
-                coordinates.lat
-              ]
-            }
-          };
-          delete feature.properties.__rowNum__;
-          geojson.features.push(feature);
+          if (coordinates) {
+            var feature = {
+              "type": "Feature",
+              "properties": record,
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  coordinates.lng,
+                  coordinates.lat
+                ]
+              }
+            };
+            delete feature.properties.__rowNum__;
+            geojson.features.push(feature);
+          } else {
+            failedGeocodes.push(record);
+          }
         }
       });
     });
@@ -107,12 +113,15 @@ window.mapModel = Backbone.Model.extend({
             "geometry": feature.geometry
           };
           geojson.features.push(feature);
+          delete record;
           // break;
         }
       });
     });
     // The mapMaker view is listening to changes on geojson attribute.
     self.set({"geojson": geojson});
+    // Since we deleted records as they joined to geometry, json is now just records which failed to join.
+    self.set({"failedJoinsAndGeocodes": json});
   },
 
   // Checks if any keys in JSON on model match values in keyMap, returns name of matching key.

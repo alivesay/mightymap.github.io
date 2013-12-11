@@ -12,55 +12,59 @@
   </head>
   <body>
     <div id="container"></div>
-    <script id="upload-handler-template" type="text/template">
+    <script id="upload-handler" type="text/template">
       <p>Choose a local CSV, XLS, or XLSX file</p>
       <input type='file' id='fileInput'>
     </script>
-    <script id="select-fields-template" type="text/template">
-      // Show two links for points and polygons.
+    <script id="points-or-polygons" type="text/template">
       <a id="points" href="#">Points</a>
       <a id="polygons" href="#">Polygons</a>
-      // If points, show select elements for address, city, state, county, ZIP, country, some instructions, and a button to go.
+    </script>
+    <script id="points-template" type="text/template">
       <form id="points-form">
         <select id="address">
           <option value="">Address</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <select id="city">
           <option value="">City</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <select id="state">
           <option value="">State</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <select id="county">
           <option value="">County</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <select id="zip">
           <option value="">ZIP</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <select id="country">
           <option value="">Country</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <input type="button" value="Submit">
       </form>
-      // If polygons, show a select element for the various geometry we have available to join to and a select element showing all the column names from their data.
+      </script>
+      <script id="polygons-template" type="text/template">
       <form id="polygon-form">
         <select id="geometry">
           <option value="">Geometry</option>
+          <option value="countries">Countries</option>
+          <option value="states">States</option>
+          <option value="counties">Counties</option>
         </select>
         <select id="field">
           <option value="">Field</option>
-          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option><%= key %></option> <% }); %>
+          <% $.each(window.map.get("json")[0], function(key, value) { %>  <option value="<%= key %>"><%= key %></option> <% }); %>
         </select>
         <input type="button" value="Submit">
       </form>
     </script>
-    <script id="map-maker-template" type="text/template">
+    <script id="map-maker" type="text/template">
       <div id='map'></div>
     </script>
     <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
