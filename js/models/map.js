@@ -18,19 +18,22 @@ window.mapModel = Backbone.Model.extend({
     "json": {},
     "spatialData": {
       "dataType": "",
-      "spatialProperties": ""
+      "spatialProperties": "",
+      "setBy": ""
     },
-    "failedJoinsAndGeocodes": {},
+    "failedJoinsAndGeocodes": [],
     "geojson": {"type": "FeatureCollection", "features": []}
   },
 
   // Geocode JSON records using spatialProperties, set geoJSON.
   // TODO: Put failed geocodes somewhere that the user can see and edit them/try to geocode them again.
   // TODO: Investigate why __rowNum__ isn't being deleted.
+  // TODO: If less than 20% of geocodes are successful, render selectFields view.
+  // TODO: Snip last comma from geocode string.
   geocode: function() {
     var self = this;
     var json = self.get("json");
-    var failedGeocodes = self.get("failedJoinsAndGeocodes");
+    var failedGeocodes = [];
     var spatialProperties = self.get("spatialData").spatialProperties;
     var geojson = {"type": "FeatureCollection", "features": []};
     $.each(json, function(index, record) {
@@ -65,6 +68,7 @@ window.mapModel = Backbone.Model.extend({
         }
       });
     });
+    self.set({"failedJoinsAndGeocodes": failedGeocodes});
     // The mapMaker view is listening to changes on geojson attribute.
     self.set({"geojson": geojson});
   },
@@ -72,18 +76,21 @@ window.mapModel = Backbone.Model.extend({
   // Gets geoJSON from local server.
   // TODO: Figure out why setting dataType to JSON throws parsererror, remove parseJSON call.
   getGeoJSON: function(fileName) {
+    var geojson = {};
     $.ajax({
       url: "js/geojson/" + fileName,
       async: false,
       success: function(data) {
-        return $.parseJSON(data);
+        geojson = $.parseJSON(data);
       }
     });
+    return geojson;
   },
 
   // Take JSON and attach it to appropriate country/state/county/ZIP/area code geoJSON.
   // TODO: Currently only looking for exact matches to join user data and geoJSON. Make it so if a record name is a 90% match to a feature name, we join them. 
-  // TODO: Also search feature abbreviations/alternate names if the initial pass over feature names fails.
+  // TODO: Also search feature abbreviations/alternate names if the initial pass over feature names fails (if less than 20% join or something).
+  // TODO: If less than 20% of the second pass hit, render selectFields view.
   // TODO: Figure out why the break statement throws an error or if there's a similar option to exit the $.each() loop.
   // TODO: Get geoJSON for ZIPs and counties.
   // TODO: Clean up geoJSON (get rid of all non-essential properties).
@@ -93,35 +100,43 @@ window.mapModel = Backbone.Model.extend({
     var dataType = self.get("spatialData").dataType;
     var spatialProperty = self.get("spatialData").spatialProperties;
     var features = {};
+    var failedJoins = [];
+    var joined = false;
+    var feature = {};
+    var geojson = {"type": "FeatureCollection", "features": []};
     if (dataType === "zip") {
       features = {};
     } else if (dataType === "county") {
       features = {};
     } else if (dataType === "state") {
-      features = self.getGeoJSON("states-and-provinces.geojson");
+      features = self.getGeoJSON("states-and-provinces.geojson").features;
     } else if (dataType === "country") {
-      features = self.getGeoJSON("countries.geojson");
+      features = self.getGeoJSON("countries.geojson").features;
     }
-    var geojson = {"type": "FeatureCollection", "features": []};
     $.each(json, function(index, record) {
       recordName = record[spatialProperty];
       $.each(features, function(index, feature) {
         if (recordName.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase() === feature.properties.name.toLowerCase()) {
-          var feature = {
+          joined = true;
+          feature = {
             "type": "Feature",
             "properties": record,
             "geometry": feature.geometry
           };
+          delete feature.properties.__rowNum__;
           geojson.features.push(feature);
-          delete record;
           // break;
         }
       });
+      if (joined) {
+        joined = false;
+      } else {
+        failedJoins.push(record);
+      }
     });
+    self.set({"failedJoinsAndGeocodes": failedJoins});
     // The mapMaker view is listening to changes on geojson attribute.
     self.set({"geojson": geojson});
-    // Since we deleted records as they joined to geometry, json is now just records which failed to join.
-    self.set({"failedJoinsAndGeocodes": json});
   },
 
   // Checks if any keys in JSON on model match values in keyMap, returns name of matching key.

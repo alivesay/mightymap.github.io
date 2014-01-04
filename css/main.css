@@ -1,3 +1,13 @@
 html, body, #container, #map {
   height: 100%;
 }
+
+#sidebar {
+  height: 100%;
+  width: 25%;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  z-index: 10;
+  background-color: #fff;
+}

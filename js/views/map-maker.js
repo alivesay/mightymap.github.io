@@ -17,7 +17,9 @@ window.mapMakerView = Backbone.View.extend({
   el: '#container',
 
   // Handle events.
-  events: {},
+  events: {
+    "click #failed-form input": "handleFailedRecords"
+  },
 
   // Initialize view.
   initialize: function() {
@@ -29,6 +31,8 @@ window.mapMakerView = Backbone.View.extend({
     $(this.el).html(_.template($("#map-maker").html()));
     this.makeMap();
   },
+
+  handleFailedRecords: function() {},
 
   // Make map and add geoJSON. Assumes model has been instantiated and geojson object is an attribute on the model.
   makeMap: function() {

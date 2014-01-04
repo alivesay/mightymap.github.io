@@ -13,7 +13,7 @@
   <body>
     <div id="container"></div>
     <script id="upload-handler" type="text/template">
-      <p>Choose a local CSV, XLS, or XLSX file</p>
+      <p>Upload a CSV, XLS, XLSX, SHP (or ZIP containing a SHP), JSON, or geoJSON file.</p>
       <input type='file' id='fileInput'>
     </script>
     <script id="points-or-polygons" type="text/template">
@@ -48,6 +48,7 @@
         </select>
         <input type="button" value="Submit">
       </form>
+      <div class="error"></div>
       </script>
       <script id="polygons-template" type="text/template">
       <form id="polygon-form">
@@ -63,9 +64,28 @@
         </select>
         <input type="button" value="Submit">
       </form>
+      <div class="error"></div>
     </script>
     <script id="map-maker" type="text/template">
       <div id='map'></div>
+      <div id="sidebar">
+        <div id="data-changes">
+          <h1>Data Stuff</h1>
+          <% if (window.map.get('failedJoinsAndGeocodes').length > 0) { %>
+            <h3>Failed Joins and Geocodes</h3>
+            <form id="failed-form">
+              <% $.each(window.map.get('failedJoinsAndGeocodes'), function(index, record) { %> <input type="text" value=<%= record %>> <% }); %>
+            <input type="button" value="Submit">
+            </form>
+          <% } %>
+          <h3>If not set manually already, allow option to set fields.</h3>
+        </div>
+        <div id="symbolization">
+          <h1>Symbolization</h1>
+          <h3>If points, allow just points, choropleth, category, graduated symbols, proportional symbols, heat map, or hexagonal bins</h3>
+          <h3>If polygons, allow just geometry, choropleth, category, or centroid bubbles</h3>
+        </div>
+      </div>
     </script>
     <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
     <script src="js/vendor/jquery.js"></script>

@@ -34,8 +34,14 @@ window.selectFieldsView = Backbone.View.extend({
     $(this.el).html(_.template($("#polygons-template").html()));
   },
 
+  // Throw error.
+  throwError: function(error) {
+    $(".error").append(error);
+  },
+
   // Get data from select elements, make an object containing spatial fields and their names, and set that data on the model.
   // TODO: I don't like the way I'm matching fields. What if the user's address column is named "Address"? (I realize that woould have been caught by parseFields, but what if they're coming back to correct an error?)
+  // TODO: Add option for lat/long.
   onPointFormSubmit: function() {
     var form = $("#points-form");
     var addressField = $("#address", form).find(":selected").text();
@@ -45,18 +51,22 @@ window.selectFieldsView = Backbone.View.extend({
     var zipField = $("#zip", form).find(":selected").text();
     var countryField = $("#country", form).find(":selected").text();
     var spatialProperties = {};
-    if (addressField !== "Address") {
-      spatialProperties.address = addressField;
-    } if (cityField !== "City") {
-      spatialProperties.city = cityField;
-    } if (stateField !== "State") {
-      spatialProperties.state = stateField;
-    } if (countyField !== "County") {
-      spatialProperties.county = countyField;
-    } if (zip !== "ZIP") {
-      spatialProperties.zip = zipField;
-    } if (countryField !== "Country") {
-      spatialProperties.country = countryField;
+    if (addressField || cityField) {
+      if (addressField !== "Address") {
+        spatialProperties.address = addressField;
+      } if (cityField !== "City") {
+        spatialProperties.city = cityField;
+      } if (stateField !== "State") {
+        spatialProperties.state = stateField;
+      } if (countyField !== "County") {
+        spatialProperties.county = countyField;
+      } if (zip !== "ZIP") {
+        spatialProperties.zip = zipField;
+      } if (countryField !== "Country") {
+        spatialProperties.country = countryField;
+      }
+    } else {
+      this.throwError("You must select either an address or city field to map points.");
     }
     this.model.set({"spatialData": {"dataType": "point", "spatialProperties": spatialProperties}});
   },
@@ -66,7 +76,11 @@ window.selectFieldsView = Backbone.View.extend({
     var form = $("#points-form");
     var geometry = $("#geometry", form).find(":selected").text();
     var field = $("#field", form).find(":selected").text();
-    this.model.set({"spatialData": {"dataType": geometry, "spatialProperties": {geometry: field}}});
+    if (geometry && field) {
+      this.model.set({"spatialData": {"dataType": geometry, "spatialProperties": {geometry: field}}});
+    } else {
+      this.throwError("You must specify both geometry type and field.");
+    }
   }
 
 });
