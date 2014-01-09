@@ -1,0 +1,18 @@
+# Dependencies
+markdown:         redcarpet
+pygments:         true
+
+# Permalinks
+permalink:        pretty
+
+# Setup
+title:            MightyMap
+tagline:          'One-click mapping'
+description:      'Make a map in one click. Just select a spreadsheet we&apos;ll do the rest.'
+url:              http://mightymap.github.io
+
+author:
+  name:           'Brad Simantel'
+  url:            https://twitter.com/mightymap
+
+paginate:         5
