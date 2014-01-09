@@ -3,7 +3,7 @@ markdown:         redcarpet
 pygments:         true
 
 # Permalinks
-permalink:        /:title/
+permalink:        /blog/:title/
 
 # Setup
 title:            MightyMap
