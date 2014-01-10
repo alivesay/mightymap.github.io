@@ -1,9 +1,12 @@
+# TODO: Get paginator working in /blog/ subdirectory.
+# TODO: Get permalinks to work as /blog/:title/.
+
 # Dependencies
 markdown:         redcarpet
 pygments:         true
 
 # Permalinks
-permalink:        /blog/:title/
+permalink:        pretty
 
 # Setup
 title:            MightyMap
@@ -16,4 +19,4 @@ author:
   url:            https://twitter.com/mightymap
 
 paginate:         5
-paginate_path:    /blog/page:num
+paginate_path:    /blog/:num
